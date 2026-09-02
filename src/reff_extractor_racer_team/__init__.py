@@ -1,2 +1,1 @@
-def main() -> None:
-    print("Hello from reff-extractor-racer-team!")
+"""Reff Extractor - Extract and process references from racing team data."""
