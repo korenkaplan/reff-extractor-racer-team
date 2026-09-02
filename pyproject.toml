@@ -1,10 +1,13 @@
 [project]
 name = "reff-extractor-racer-team"
 version = "0.1.0"
-description = "Add your description here"
+description = "Extract and process references from racing team data"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0", "ruff>=0.1.0"]
 
 [project.scripts]
 reff-extractor-racer-team = "reff_extractor_racer_team:main"
@@ -12,3 +15,22 @@ reff-extractor-racer-team = "reff_extractor_racer_team:main"
 [build-system]
 requires = ["uv_build>=0.12.9,<0.13.0"]
 build-backend = "uv_build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+    "ruff>=0.16.5",
+]
