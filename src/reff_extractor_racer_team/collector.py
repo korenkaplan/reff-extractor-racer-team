@@ -52,7 +52,7 @@ def get_file_type(filename: str) -> Optional[str]:
         ISR_
     """
 
-    upper_filename = filename.upper()
+    upper_filename = filename.upper().replace(" ", "_")
 
     for device_type in ("RACER", "TABLET", "ISR"):
         if upper_filename.startswith(f"{device_type}_"):
@@ -364,12 +364,13 @@ def process_device(device: AndroidDevice) -> bool:
             except OSError as e:
                 print(f"[!] Failed to move {filename}: {e}")
 
-    # Remove the temporary Records directory if it is empty.
-    try:
-        os.rmdir(records_dir)
-    except OSError:
-        # The directory may not be empty if something failed to move.
-        pass
+    # Remove empty temporary directories, including nested directories.
+    for root, _, _ in os.walk(records_dir, topdown=False):
+        try:
+            os.rmdir(root)
+        except OSError:
+            # Keep directories that still contain files after a failed move.
+            pass
 
     print(f"[+] Total REFF files copied from {device.name}: {copied_count}")
 
