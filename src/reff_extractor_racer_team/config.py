@@ -40,9 +40,9 @@ DEVICES_REGISTRY: List[AndroidDevice] = [
         file_prefix="TABLET",
     ),
     AndroidDevice(
-            name="RC PAD Home",
-            serial="f7b2909c",
-            remote_log_path="/sdcard/Records",
-            file_prefix="ISR",
-        ),
+        name="RC PAD Home",
+        serial="f7b2909c",
+        remote_log_path="/sdcard/Records",
+        file_prefix="ISR",
+    ),
 ]

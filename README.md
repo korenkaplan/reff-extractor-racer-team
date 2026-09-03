@@ -48,6 +48,20 @@ reff-extractor-racer-team
 uv run pytest
 ```
 
+### Install pre-commit hooks
+
+Install the hooks once for this repository:
+
+```bash
+uv run pre-commit install
+```
+
+The hooks run automatically before each commit. Run them manually with:
+
+```bash
+uv run pre-commit run --all-files
+```
+
 ### Run linting and formatting
 
 Check code with ruff:
