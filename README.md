@@ -40,6 +40,10 @@ Or, if you've activated the virtual environment:
 reff-extractor-racer-team
 ```
 
+The application also pulls screen recordings from
+`/sdcard/Eyesatop-Records/Screen-Videos/`. Videos within 120 seconds of a
+flight's log files are moved into that flight folder.
+
 ## Development
 
 ### Run tests

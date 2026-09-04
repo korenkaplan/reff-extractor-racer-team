@@ -5,10 +5,11 @@ import subprocess
 from datetime import datetime
 from typing import Optional
 
-from .config import LOCAL_DUMP_DIR, AndroidDevice
+from .config import LOCAL_DUMP_DIR, VIDEO_REMOTE_PATH, AndroidDevice
 
 # Maximum allowed time difference between files in the same flight.
 MAX_FLIGHT_TIME_DIFF = 120
+MAX_VIDEO_TIME_DIFF = 240
 
 
 def get_connected_serials() -> set[str]:
@@ -59,6 +60,57 @@ def get_file_type(filename: str) -> Optional[str]:
             return device_type
 
     return None
+
+
+def get_video_files() -> list[dict]:
+    """Return downloaded videos from the main dump directory."""
+
+    videos = []
+
+    for filename in os.listdir(LOCAL_DUMP_DIR):
+        if not filename.upper().startswith("VIDEO_"):
+            continue
+
+        file_path = os.path.join(LOCAL_DUMP_DIR, filename)
+
+        if not os.path.isfile(file_path):
+            continue
+
+        try:
+            videos.append(
+                {
+                    "filename": filename,
+                    "path": file_path,
+                    "mtime": os.path.getmtime(file_path),
+                    "size": os.path.getsize(file_path),
+                }
+            )
+        except OSError:
+            continue
+
+    return videos
+
+
+def attach_videos_to_flight(flight_dir: str, flight_files: list[dict], videos: list[dict]) -> int:
+    """Move videos within the flight time limit into a flight directory."""
+
+    flight_times = [file_info["mtime"] for file_info in flight_files]
+    matching_videos = [
+        video
+        for video in videos
+        if min(abs(video["mtime"] - flight_time) for flight_time in flight_times)
+        <= MAX_VIDEO_TIME_DIFF
+    ]
+
+    for video in matching_videos:
+        try:
+            shutil.move(video["path"], os.path.join(flight_dir, video["filename"]))
+        except OSError as error:
+            print(f"[!] Failed to move {video['filename']}: {error}")
+        else:
+            print(f"    VIDEO: {video['filename']}")
+
+    return len(matching_videos)
 
 
 def group_files_into_flights() -> None:
@@ -217,7 +269,7 @@ def group_files_into_flights() -> None:
 
         # Create flight directory.
         while True:
-            flight_name = f"Flight_{flight_number:03d}"
+            flight_name = f"Flight_{flight_number:02d}"
 
             flight_dir = os.path.join(
                 LOCAL_DUMP_DIR,
@@ -251,6 +303,8 @@ def group_files_into_flights() -> None:
 
             except OSError as e:
                 print(f"[!] Failed to move {file_info['filename']}: {e}")
+
+        attach_videos_to_flight(flight_dir, best_flight, get_video_files())
 
         used.update(best_indexes)
         flights.append(best_flight)
@@ -312,7 +366,7 @@ def process_device(device: AndroidDevice) -> bool:
     if not os.path.isdir(records_dir):
         print("[i] No Records folder found.")
         print("[i] Files were already placed in the destination folder.")
-        return True
+        return pull_videos(device)
 
     copied_count = 0
 
@@ -373,5 +427,59 @@ def process_device(device: AndroidDevice) -> bool:
             pass
 
     print(f"[+] Total REFF files copied from {device.name}: {copied_count}")
+
+    pull_videos(device)
+
+    return True
+
+
+def pull_videos(device: AndroidDevice) -> bool:
+    """Pull screen recordings and flatten them into the dump directory."""
+
+    pull_command = [
+        "adb",
+        "-s",
+        device.serial,
+        "pull",
+        "-a",
+        VIDEO_REMOTE_PATH,
+        LOCAL_DUMP_DIR,
+    ]
+
+    result = subprocess.run(
+        pull_command,
+        capture_output=True,
+        text=True,
+    )
+
+    if result.returncode != 0:
+        print(f"[i] No screen videos pulled from {device.name}.")
+        return False
+
+    videos_dir = os.path.join(LOCAL_DUMP_DIR, "Screen-Videos")
+
+    if not os.path.isdir(videos_dir):
+        print(f"[i] No screen videos found for {device.name}.")
+        return True
+
+    for root, _, filenames in os.walk(videos_dir):
+        for filename in filenames:
+            source_path = os.path.join(root, filename)
+            destination_name = f"VIDEO_{device.file_prefix}_{filename}"
+            destination_path = os.path.join(LOCAL_DUMP_DIR, destination_name)
+
+            try:
+                original_mtime = os.path.getmtime(source_path)
+                shutil.move(source_path, destination_path)
+                os.utime(destination_path, (original_mtime, original_mtime))
+                print(f"[+] Video: {filename} -> {destination_name}")
+            except OSError as error:
+                print(f"[!] Failed to move video {filename}: {error}")
+
+    for root, _, _ in os.walk(videos_dir, topdown=False):
+        try:
+            os.rmdir(root)
+        except OSError:
+            pass
 
     return True

@@ -25,6 +25,7 @@ DESKTOP_PATH = onedrive_desktop if onedrive_desktop.exists() else standard_deskt
 
 # התיקייה הסופית שתיווצר בשולחן העבודה
 LOCAL_DUMP_DIR = str(DESKTOP_PATH / f"Reff_{today_str}")
+VIDEO_REMOTE_PATH = "/sdcard/Eyesatop-Records/Screen-Videos"
 
 DEVICES_REGISTRY: List[AndroidDevice] = [
     AndroidDevice(
