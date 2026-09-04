@@ -3,9 +3,7 @@ import shutil
 from datetime import datetime
 from typing import Optional
 
-from racer_team_toolkit.adb import run_adb_command
-
-from .config import LOCAL_DUMP_DIR, VIDEO_REMOTE_PATH, AndroidDevice
+from racer_team_toolkit.adb import LOCAL_DUMP_DIR, VIDEO_REMOTE_PATH, AndroidDevice, run_adb_command
 
 # Maximum allowed time difference between files in the same flight.
 MAX_FLIGHT_TIME_DIFF = 120

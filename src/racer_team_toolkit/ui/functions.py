@@ -10,6 +10,15 @@ def select_menu(message: str, choices: list[str]) -> str:
     return questionary.select(message, choices=choices).ask()
 
 
+def select_menu_tuple(message: str, choices: list[str]) -> tuple[int, str]:
+    """Display a menu and return the index and selected option."""
+
+    selected = questionary.select(message, choices=choices).ask()
+    index = choices.index(selected)
+
+    return index, selected
+
+
 def print_header(title: str) -> None:
     """Print a formatted header using rich."""
     console.print(Panel.fit(title))
