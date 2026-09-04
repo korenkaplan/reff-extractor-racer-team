@@ -12,9 +12,15 @@ def test_main_runs_without_error():
     """Test that main() executes successfully."""
     # Mock get_connected_serials to return empty set (no devices connected).
     # This allows the test to pass without requiring ADB or connected devices.
-    with patch(
-        "racer_team_toolkit.reff_extractor.main.get_connected_serials",
-        return_value=set(),
+    with (
+        patch(
+            "racer_team_toolkit.reff_extractor.main.get_connected_serials",
+            return_value=set(),
+        ),
+        patch(
+            "racer_team_toolkit.main.select_menu",
+            return_value="REFF & Video Extractor",
+        ),
     ):
         main()
 
