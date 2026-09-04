@@ -4,8 +4,8 @@ import os
 from pathlib import Path
 from unittest.mock import patch
 
-from reff_extractor_racer_team.collector import attach_videos_to_flight
-from reff_extractor_racer_team.main import main
+from racer_team_toolkit.main import main
+from racer_team_toolkit.reff_extractor.collector import attach_videos_to_flight
 
 
 def test_main_runs_without_error():
@@ -13,7 +13,7 @@ def test_main_runs_without_error():
     # Mock get_connected_serials to return empty set (no devices connected).
     # This allows the test to pass without requiring ADB or connected devices.
     with patch(
-        "reff_extractor_racer_team.collector.get_connected_serials",
+        "racer_team_toolkit.reff_extractor.main.get_connected_serials",
         return_value=set(),
     ):
         main()
@@ -21,7 +21,7 @@ def test_main_runs_without_error():
 
 def test_main_can_be_imported():
     """Test that main function can be imported from the main module."""
-    from reff_extractor_racer_team.main import main as imported_main
+    from racer_team_toolkit.main import main as imported_main
 
     assert callable(imported_main)
 

@@ -2,8 +2,9 @@
 
 import os
 
+from racer_team_toolkit.adb import get_connected_serials
+
 from .collector import (
-    get_connected_serials,
     group_files_into_flights,
     process_device,
 )

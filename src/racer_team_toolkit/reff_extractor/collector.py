@@ -1,46 +1,15 @@
 import os
-import re
 import shutil
-import subprocess
 from datetime import datetime
 from typing import Optional
+
+from racer_team_toolkit.adb import run_adb_command
 
 from .config import LOCAL_DUMP_DIR, VIDEO_REMOTE_PATH, AndroidDevice
 
 # Maximum allowed time difference between files in the same flight.
 MAX_FLIGHT_TIME_DIFF = 120
 MAX_VIDEO_TIME_DIFF = 240
-
-
-def get_connected_serials() -> set[str]:
-    """Return the serial numbers of all connected Android devices."""
-
-    try:
-        result = subprocess.run(
-            ["adb", "devices"],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-
-        connected_serials = set()
-
-        # Skip the first line ("List of devices attached")
-        # and collect only devices with the "device" status.
-        for line in result.stdout.splitlines():
-            match = re.match(r"^\s*(\S+)\s+device\s*$", line)
-
-            if match:
-                connected_serials.add(match.group(1))
-
-        if not connected_serials:
-            print("[!] No connected devices found.")
-
-        return connected_serials
-
-    except Exception as e:
-        print(f"[!] Failed to detect connected devices: {e}")
-        return set()
 
 
 def get_file_type(filename: str) -> Optional[str]:
@@ -344,11 +313,7 @@ def process_device(device: AndroidDevice) -> bool:
 
     print(f"[i] Running: {' '.join(pull_command)}")
 
-    result = subprocess.run(
-        pull_command,
-        capture_output=True,
-        text=True,
-    )
+    result = run_adb_command(pull_command)
 
     if result.returncode != 0:
         print(f"[!] Failed to pull files from {device.name}: {result.stderr.strip()}")
@@ -446,11 +411,7 @@ def pull_videos(device: AndroidDevice) -> bool:
         LOCAL_DUMP_DIR,
     ]
 
-    result = subprocess.run(
-        pull_command,
-        capture_output=True,
-        text=True,
-    )
+    result = run_adb_command(pull_command)
 
     if result.returncode != 0:
         print(f"[i] No screen videos pulled from {device.name}.")

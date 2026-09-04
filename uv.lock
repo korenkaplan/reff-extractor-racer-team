@@ -359,7 +359,7 @@ wheels = [
 ]
 
 [[package]]
-name = "reff-extractor-racer-team"
+name = "racer-team-toolkit"
 version = "0.1.0"
 source = { editable = "." }
 

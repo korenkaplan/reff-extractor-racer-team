@@ -1,5 +1,5 @@
 [project]
-name = "reff-extractor-racer-team"
+name = "racer-team-toolkit"
 version = "0.1.0"
 description = "Extract and process references from racing team data"
 readme = "README.md"
@@ -10,7 +10,7 @@ dependencies = []
 dev = ["pytest>=7.0", "ruff>=0.1.0"]
 
 [project.scripts]
-reff-extractor-racer-team = "reff_extractor_racer_team.main:main"
+racer-team-toolkit = "racer_team_toolkit.main:main"
 
 [build-system]
 requires = ["uv_build>=0.12.9,<0.13.0"]
