@@ -1,5 +1,48 @@
-from racer_team_toolkit.ui.functions import print_header
+from racer_team_toolkit.apk_installer.functions import get_folders_in_downloads
+from racer_team_toolkit.jar_management.functions import (
+    check_if_jar_exists_in_folder,
+    check_server_status,
+)
+from racer_team_toolkit.ui.functions import print_header, select_menu, select_menu_tuple
+
+FOLDER_IN_DOWNLOADS_WITH_FULL_PATH = get_folders_in_downloads()
+FOLDERS_IN_DOWNLOADS = [path.name for path in FOLDER_IN_DOWNLOADS_WITH_FULL_PATH]
+MAIN_HEADER = "Select a JAR management option:"
+USER_CHOICES = ["Upload JAR", "Restart JAR", "Return to Main Menu"]
 
 
 def main() -> None:
-    print_header("Hello from JAR Management!")
+    print_header("AR Management!")
+    user_choice = select_menu(MAIN_HEADER, USER_CHOICES)
+
+    if not check_server_status():
+        print("[-] No connected server found. Please ensure the server is running and connected.")
+        # wait for user input before returning to main menu
+        input("Press Enter to return to the main menu...")
+        return
+
+    if user_choice == "Upload JAR":
+        # prompt user to select a folder from downloads
+        folder_index, folder_name = select_menu_tuple(
+            "Select a folder to upload JAR from:", FOLDERS_IN_DOWNLOADS
+        )
+
+        # check if the folder contains a JAR file
+        check_if_jar_exists_in_folder(FOLDER_IN_DOWNLOADS_WITH_FULL_PATH[folder_index])
+
+        # if a JAR file exists, upload it to the server
+
+        # else print a message that no JAR file was found in the selected folder
+
+        # wait for user input before returning to main menu
+        return
+
+    elif user_choice == "Restart JAR":
+        # restart the JAR file on the server
+
+        # if the restart is successful, print a success message
+
+        # else print a message that the restart failed
+
+        # wait for user input before returning to main menu
+        return
