@@ -13,7 +13,9 @@ class AndroidDevice:
     serial: str
     remote_log_path: str
     file_prefix: str
-    apk_file_name: str
+    apk_name_pattern: str
+    package_name: str
+    permissions: tuple[str, ...] = ()
 
 
 # Shared ADB and device settings.
@@ -32,21 +34,32 @@ DEVICES_REGISTRY: list[AndroidDevice] = [
         serial="4LFCN380071TMZ",
         remote_log_path="/sdcard/Records",
         file_prefix="RACER",
-        apk_file_name="",
+        apk_name_pattern="app-dynamic-msdk5-debug*.apk",
+        package_name="io.eyesatop.app.dynamic.msdk5",
     ),
     AndroidDevice(
         name="Koren's Tablet",
         serial="R52Y901B9AP",
         remote_log_path="/sdcard/Records",
         file_prefix="TABLET",
-        apk_file_name="",
+        apk_name_pattern="app-dynamic-areal-control-debug*.apk",
+        package_name="io.eyesatop.apps.dynamic_areal_control",
     ),
     AndroidDevice(
         name="RC PAD Home",
         serial="f7b2909c",
         remote_log_path="/sdcard/Records",
         file_prefix="ISR",
-        apk_file_name="",
+        apk_name_pattern="flytogether-autel-msdk-25-debug*.apk",
+        package_name="io.eyesatop.apps.flytogetherautelmsdk25",
+    ),
+    AndroidDevice(
+        name="Black-widow Phone",
+        serial="RFCY61LWYQX",
+        remote_log_path="/sdcard/Records",
+        file_prefix="Black-widow",
+        apk_name_pattern="app-flytogether-redcat-blackwidow-debug*.apk",
+        package_name="io.eyesatop.apps.dynamic_areal_control",
     ),
 ]
 
@@ -64,14 +77,21 @@ TOOL_MENU_CHOICES = [
     "Exit",
 ]
 APK_INSTALLER_HEADER = "Select a folder to install APKs from:"
+APK_INSTALLER_APPROVAL_CHOICES = ["Yes", "Choose another folder", "Cancel"]
 JAR_MANAGEMENT_HEADER = "Select a JAR management option:"
 REFF_EXTRACTOR_HEADER = "REFF & Video Extractor"
-REFF_EXTRACTOR_CHOICES = ["REFF Only", "REFF & Videos", "Time Adjustment", "Return to Main Menu"]
+REFF_EXTRACTOR_CHOICES = [
+    "REFF Only",
+    "REFF & Videos",
+    "Time Adjustment (Not Available Yet)",
+    "Return to Main Menu",
+]
 JAR_MANAGEMENT_CHOICES = ["Upload JAR", "Restart JAR", "Return to Main Menu"]
 
 
 __all__ = [
     "APK_INSTALLER_HEADER",
+    "APK_INSTALLER_APPROVAL_CHOICES",
     "AndroidDevice",
     "DEVICES_REGISTRY",
     "DESKTOP_PATH",

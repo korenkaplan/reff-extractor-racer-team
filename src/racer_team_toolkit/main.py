@@ -20,7 +20,7 @@ def main() -> None:
             # run APK installer
             run_apk_installer_main()
 
-        elif choice == "JAR Management":
+        elif choice == "JAR Management (Not Available Yet)":
             # run JAR management
             run_jar_management_main()
 
