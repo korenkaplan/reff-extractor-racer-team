@@ -102,27 +102,24 @@ def run_installation(plan: InstallationPlan, console) -> InstallationResult:
 
 
 def uninstall_application(device: AndroidDevice, console) -> Optional[str]:
-    """Uninstall an existing package, treating an absent package as clean."""
+    """Uninstall the application if it is currently installed."""
 
-    result = run_adb_command(
+    if not is_package_installed(device):
+        console.print("[yellow]○ Application not installed — skipping uninstall[/yellow]")
+        return None
+
+    return run_step(
+        console,
+        "3.1 Uninstalling current application...",
+        "Application uninstalled",
         [
             "adb",
             "-s",
             device.serial,
-            "shell",
-            "pm",
             "uninstall",
             device.package_name,
-        ]
+        ],
     )
-    output = command_output(result)
-
-    if result.returncode == 0 or "not installed" in output.lower():
-        console.print("[green]✓ Application uninstalled[/green]")
-        return None
-
-    print_command_failure(console, "3.1 Uninstalling current application", result)
-    return command_failure_reason(result)
 
 
 def configure_install_verification(device: AndroidDevice, console) -> None:
@@ -229,3 +226,21 @@ def grant_permissions(device: AndroidDevice, console) -> Optional[str]:
 
     console.print("[green]✓ Permissions granted[/green]")
     return None
+
+
+def is_package_installed(device: AndroidDevice) -> bool:
+    """Return whether the configured package is installed on the device."""
+
+    result = run_adb_command(
+        [
+            "adb",
+            "-s",
+            device.serial,
+            "shell",
+            "pm",
+            "path",
+            device.package_name,
+        ]
+    )
+
+    return result.returncode == 0 and bool(result.stdout.strip())

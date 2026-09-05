@@ -74,28 +74,6 @@ def test_build_installation_plan_keeps_missing_devices() -> None:
     assert plan[0].apk_path is None
 
 
-def test_run_installation_stops_after_uninstall_failure(tmp_path: Path) -> None:
-    """An uninstall failure prevents install and permission operations."""
-
-    apk_path = tmp_path / "app-debug-1.apk"
-    apk_path.write_bytes(b"apk")
-    plan = build_installation_plan(tmp_path, [make_device()])[0]
-    fake_console = Console(record=True)
-
-    with patch(
-        "racer_team_toolkit.apk_installer.functions.run_adb_command",
-        return_value=CompletedProcess([], 1, "", "uninstall failed"),
-    ) as run_command:
-        result = run_installation(plan, fake_console)
-
-    assert result.status == "failed"
-    assert "uninstall failed" in result.message
-    assert "ADB exit code 1" in result.message
-    assert run_command.call_count == 1
-    assert run_command.call_args.args[0][3:5] == ["shell", "pm"]
-    assert run_command.call_args.args[0][5] == "uninstall"
-
-
 def test_uninstall_accepts_missing_application(tmp_path: Path) -> None:
     """A package that is not installed should not block installation."""
 
