@@ -20,7 +20,7 @@ def main() -> None:
         input("Press Enter to return to the main menu...")
         return
 
-    if user_choice == "Upload JAR":
+    if user_choice == JAR_MANAGEMENT_CHOICES[0]:  # Upload JAR
         # prompt user to select a folder from downloads
         folder_index, folder_name = select_menu_tuple(
             "Select a folder to upload JAR from:", FOLDERS_IN_DOWNLOADS
@@ -36,7 +36,7 @@ def main() -> None:
         # wait for user input before returning to main menu
         return
 
-    elif user_choice == "Restart JAR":
+    elif user_choice == JAR_MANAGEMENT_CHOICES[1]:  # Restart JAR
         # restart the JAR file on the server
 
         # if the restart is successful, print a success message
@@ -44,4 +44,6 @@ def main() -> None:
         # else print a message that the restart failed
 
         # wait for user input before returning to main menu
+        return
+    elif user_choice == JAR_MANAGEMENT_CHOICES[2]:  # Return to Main Menu
         return

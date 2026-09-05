@@ -5,7 +5,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from racer_team_toolkit.main import main
-from racer_team_toolkit.reff_extractor.collector import attach_videos_to_flight
+from racer_team_toolkit.reff_extractor.functions import attach_videos_to_flight
 
 
 def test_main_runs_without_error():
@@ -14,12 +14,16 @@ def test_main_runs_without_error():
     # This allows the test to pass without requiring ADB or connected devices.
     with (
         patch(
-            "racer_team_toolkit.reff_extractor.main.get_connected_serials",
+            "racer_team_toolkit.reff_extractor.functions.get_connected_serials",
             return_value=set(),
         ),
         patch(
             "racer_team_toolkit.main.select_menu",
             return_value="REFF & Video Extractor",
+        ),
+        patch(
+            "racer_team_toolkit.reff_extractor.main.select_menu",
+            return_value="REFF Only",
         ),
     ):
         main()

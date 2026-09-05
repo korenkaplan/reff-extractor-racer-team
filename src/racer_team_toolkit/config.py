@@ -64,6 +64,8 @@ TOOL_MENU_CHOICES = [
 ]
 APK_INSTALLER_HEADER = "Select a folder to install APKs from:"
 JAR_MANAGEMENT_HEADER = "Select a JAR management option:"
+REFF_EXTRACTOR_HEADER = "REFF & Video Extractor"
+REFF_EXTRACTOR_CHOICES = ["REFF Only", "REFF & Videos", "Time Adjustment", "Return to Main Menu"]
 JAR_MANAGEMENT_CHOICES = ["Upload JAR", "Restart JAR", "Return to Main Menu"]
 
 

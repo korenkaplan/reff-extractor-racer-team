@@ -1,6 +1,8 @@
 import questionary
 from rich.console import Console
 from rich.panel import Panel
+from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.table import Table
 
 console = Console()
 
@@ -42,3 +44,66 @@ def print_warning(message: str) -> None:
 def print_error(message: str) -> None:
     """Print an error message in red."""
     console.print(f"[red][-][/red] {message}")
+
+
+def pause(message: str = "Press Enter to return...") -> None:
+    """Pause the program and wait for user input."""
+    input(message)
+
+
+def run_with_spinner(message: str, function, *args, **kwargs):
+    """Run a function with a spinner and display a message."""
+
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        transient=True,
+    ) as progress:
+        task = progress.add_task(message, start=False)
+        progress.start_task(task)
+        result = function(*args, **kwargs)
+        progress.stop_task(task)
+    return result
+
+
+def print_flight_table(
+    flights: list[dict], device_types: tuple[str, ...], *, include_videos: bool = True
+) -> None:
+    """Render grouped REFF files and videos in a Rich table."""
+
+    table = Table(title="Flights", show_lines=True)
+    table.add_column("Flight", style="bold cyan")
+
+    for device_type in device_types:
+        table.add_column(device_type)
+
+    if include_videos:
+        table.add_column("Screen Videos")
+
+    for flight in flights:
+        row = [flight["name"]]
+        files_by_type = flight["files_by_type"]
+
+        for device_type in device_types:
+            filenames = files_by_type.get(device_type, [])
+            row.append("\n".join(filenames) if filenames else "-")
+
+        if include_videos:
+            videos = flight.get("videos", [])
+            row.append("\n".join(videos) if videos else "-")
+        table.add_row(*row)
+
+    console.print(table)
+
+
+def print_extraction_summary(summary: dict[str, int]) -> None:
+    """Render extraction totals in a Rich summary table."""
+
+    table = Table(title="Extraction Summary", show_header=False, box=None)
+    table.add_column("Metric", style="bold")
+    table.add_column("Count", justify="right", style="cyan")
+
+    for label, value in summary.items():
+        table.add_row(label, str(value))
+
+    console.print(table)
