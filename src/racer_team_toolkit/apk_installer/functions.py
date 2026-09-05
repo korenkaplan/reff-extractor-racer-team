@@ -87,7 +87,7 @@ def run_installation(plan: InstallationPlan, console) -> InstallationResult:
 
     install_error = run_step(
         console,
-        "3.2 Installing new APK...",
+        "Installing new APK...",
         "APK installed",
         ["adb", "-s", device.serial, "install", "-r", str(plan.apk_path)],
     )
@@ -244,3 +244,24 @@ def is_package_installed(device: AndroidDevice) -> bool:
     )
 
     return result.returncode == 0 and bool(result.stdout.strip())
+
+
+def grant_manage_all_files(device: AndroidDevice, console) -> str | None:
+    """Grant Manage All Files access to the installed application."""
+
+    return run_step(
+        console,
+        "3.4 Granting all files access...",
+        "All files access granted",
+        [
+            "adb",
+            "-s",
+            device.serial,
+            "shell",
+            "appops",
+            "set",
+            device.package_name,
+            "MANAGE_EXTERNAL_STORAGE",
+            "allow",
+        ],
+    )
