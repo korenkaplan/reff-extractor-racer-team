@@ -51,8 +51,9 @@ DEVICES_REGISTRY: list[AndroidDevice] = [
 ]
 
 # REFF extraction settings.
+PROJECT_STATUS = "development"
 MAX_FLIGHT_TIME_DIFF = 120
-MAX_VIDEO_TIME_DIFF = 240
+MAX_VIDEO_TIME_DIFF = 300
 SUPPORTED_DEVICE_TYPES = ("RACER", "TABLET", "ISR")
 
 # Main menu settings.
@@ -79,6 +80,7 @@ __all__ = [
     "LOCAL_DUMP_DIR",
     "MAX_FLIGHT_TIME_DIFF",
     "MAX_VIDEO_TIME_DIFF",
+    "PROJECT_STATUS",
     "SUPPORTED_DEVICE_TYPES",
     "TOOL_MENU_CHOICES",
     "VIDEO_REMOTE_PATH",

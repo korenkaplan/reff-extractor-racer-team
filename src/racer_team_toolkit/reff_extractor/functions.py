@@ -13,6 +13,7 @@ from racer_team_toolkit.config import (
     LOCAL_DUMP_DIR,
     MAX_FLIGHT_TIME_DIFF,
     MAX_VIDEO_TIME_DIFF,
+    PROJECT_STATUS,
     SUPPORTED_DEVICE_TYPES,
     VIDEO_REMOTE_PATH,
     AndroidDevice,
@@ -54,6 +55,7 @@ def run_extraction(*, include_videos: bool) -> None:
 
     connected_devices = get_connected_devices(connected_serials)
     print_connected_devices(connected_devices)
+    # Limit report columns to devices that participated in this extraction.
     connected_device_types = tuple(device.file_prefix for device in connected_devices)
     processed_any = False
     copied_reff_files = 0
@@ -107,14 +109,15 @@ def print_extraction_result(
 
     if processed_any:
         console.print("[bold green]✓ Extraction completed successfully[/bold green]")
-        print_flight_table(flights, device_types, include_videos=include_videos)
+        if flights:
+            print_flight_table(flights, device_types, include_videos=include_videos)
         summary = {
             "Flight folders created": len(flights),
-            "REFF files copied": copied_reff_files,
+            f"REFF files {get_transfer_verb().lower()}": copied_reff_files,
         }
 
         if include_videos:
-            summary["Screen videos copied"] = copied_videos
+            summary[f"Screen videos {get_transfer_verb().lower()}"] = copied_videos
 
         print_extraction_summary(summary)
         print(f"\n[V] All files are located at:\n    {os.path.abspath(LOCAL_DUMP_DIR)}")
@@ -208,11 +211,12 @@ def group_files_into_flights() -> list[dict]:
 
     files = collect_reff_files()
 
-    if len(files) < 2:
+    if not files:
         return []
 
     files.sort(key=lambda file_info: file_info["mtime"])
     used_indexes = set()
+    used_video_paths = set()
     flights = []
     flight_number = 1
 
@@ -220,17 +224,25 @@ def group_files_into_flights() -> list[dict]:
         if index in used_indexes:
             continue
 
+        # Start with the earliest unused file and select compatible files by type.
         selected_files, selected_indexes = select_flight_files(files, index, used_indexes)
+        matching_videos = find_matching_videos(
+            selected_files,
+            get_video_files(),
+            used_video_paths,
+        )
 
-        if len(selected_files) < 2:
+        # A flight needs either multiple device types or a matching video.
+        if len(selected_files) < 2 and not matching_videos:
             continue
 
-        flight_name, flight_dir = create_flight_directory(flight_number)
-        matching_videos = find_matching_videos(selected_files, get_video_files())
+        flight_name, flight_dir = create_flight_directory(flight_number, selected_files[0]["mtime"])
         move_flight_files(flight_dir, selected_files)
         attach_videos_to_flight(flight_dir, selected_files, matching_videos)
 
+        # Retain the moved filenames for the final Rich table.
         used_indexes.update(selected_indexes)
+        used_video_paths.update(video["path"] for video in matching_videos)
         flights.append(
             {
                 "name": flight_name,
@@ -243,13 +255,19 @@ def group_files_into_flights() -> list[dict]:
     return flights
 
 
-def find_matching_videos(flight_files: list[dict], videos: list[dict]) -> list[dict]:
+def find_matching_videos(
+    flight_files: list[dict],
+    videos: list[dict],
+    used_video_paths: Optional[set[str]] = None,
+) -> list[dict]:
     """Return videos within the configured time limit of a flight."""
 
+    used_video_paths = used_video_paths or set()
     flight_times = [file_info["mtime"] for file_info in flight_files]
     return [
         video
         for video in videos
+        if video["path"] not in used_video_paths
         if min(abs(video["mtime"] - flight_time) for flight_time in flight_times)
         <= MAX_VIDEO_TIME_DIFF
     ]
@@ -309,6 +327,7 @@ def select_flight_files(
     candidates_by_type = collect_flight_candidates(files, base_index, used_indexes)
 
     for device_type, candidates in candidates_by_type.items():
+        # Prefer the same minute, then the largest file, then the closest time.
         candidates.sort(
             key=lambda candidate: (
                 0 if candidate["same_minute"] else 1,
@@ -366,11 +385,12 @@ def flight_is_within_time_limit(flight_files: list[dict]) -> bool:
     return max(timestamps) - min(timestamps) <= MAX_FLIGHT_TIME_DIFF
 
 
-def create_flight_directory(flight_number: int) -> tuple[str, str]:
-    """Create and return the next available flight directory."""
+def create_flight_directory(flight_number: int, first_file_mtime: float) -> tuple[str, str]:
+    """Create a flight directory named with its number and first-file timestamp."""
 
     while True:
-        flight_name = f"Flight_{flight_number:02d}"
+        timestamp = datetime.fromtimestamp(first_file_mtime).strftime("%d-%m-%Y_%H-%M-%S")
+        flight_name = f"Flight_{flight_number:02d}_{timestamp}"
         flight_dir = os.path.join(LOCAL_DUMP_DIR, flight_name)
 
         if not os.path.exists(flight_dir):
@@ -395,7 +415,7 @@ def move_flight_files(flight_dir: str, flight_files: list[dict]) -> None:
 def process_device(device: AndroidDevice, *, include_videos: bool = True) -> dict[str, int]:
     """Pull REFF files from one device and optionally pull its videos."""
 
-    print(f"\n[--->] Starting copy from: {device.name}")
+    print(f"\n[--->] Starting {get_transfer_verb().lower()} from: {device.name}")
 
     with Progress(
         SpinnerColumn(),
@@ -404,16 +424,19 @@ def process_device(device: AndroidDevice, *, include_videos: bool = True) -> dic
         TaskProgressColumn(),
         transient=False,
     ) as progress:
-        reff_task_id = progress.add_task("REFF: Copied 0 of 0 files", total=0)
+        # REFF and video tasks have separate totals and counters.
+        reff_task_id = progress.add_task(f"REFF: {get_transfer_verb()} 0 of 0 files", total=0)
         create_output_directory()
         reff_files = pull_reff_files(device, progress, reff_task_id)
         videos = 0
 
         if include_videos:
-            video_task_id = progress.add_task("Videos: Copied 0 of 0 files", total=0)
+            video_task_id = progress.add_task(
+                f"Videos: {get_transfer_verb()} 0 of 0 files", total=0
+            )
             videos = pull_videos(device, progress, video_task_id)
 
-    print(f"[<---] Finished copy from: {device.name}")
+    print(f"[<---] Finished {get_transfer_verb().lower()} from: {device.name}")
 
     return {"reff_files": reff_files, "videos": videos}
 
@@ -433,13 +456,18 @@ def pull_reff_files(device: AndroidDevice, progress: Progress, task_id: int) -> 
         return 0
 
     total_files = count_files(records_dir)
+    # ADB creates Records only after the pull, so calculate its total here.
     progress.update(
         task_id,
         total=total_files,
-        description=f"REFF: Copied 0 of {total_files} files",
+        description=f"REFF: {get_transfer_verb()} 0 of {total_files} files",
     )
     copied_count = move_record_files(records_dir, device, progress, task_id)
     remove_empty_directories(records_dir)
+
+    if PROJECT_STATUS == "production" and copied_count == total_files:
+        clear_remote_directory(device.serial, device.remote_log_path)
+
     return copied_count
 
 
@@ -463,9 +491,13 @@ def move_record_files(
             destination_path = os.path.join(LOCAL_DUMP_DIR, prefixed_filename)
 
             try:
+                # Flight matching depends on the original device timestamp.
                 original_mtime = os.path.getmtime(source_path)
-                os.rename(source_path, destination_path)
-                os.utime(destination_path, (original_mtime, original_mtime))
+                transfer_file(source_path, destination_path)
+                if PROJECT_STATUS == "production":
+                    os.utime(destination_path, (original_mtime, original_mtime))
+                else:
+                    os.remove(source_path)
                 copied_count += 1
             except OSError as error:
                 print(f"[!] Failed to move a REFF file: {error}")
@@ -508,14 +540,18 @@ def pull_videos(device: AndroidDevice, progress: Progress, task_id: int) -> int:
     if not os.path.isdir(videos_dir):
         return 0
 
-    video_count = count_files(videos_dir)
+    total_video_files = count_files(videos_dir)
     progress.update(
         task_id,
-        total=video_count,
-        description=f"Videos: Copied 0 of {video_count} files",
+        total=total_video_files,
+        description=f"Videos: {get_transfer_verb()} 0 of {total_video_files} files",
     )
     video_count = move_video_files(videos_dir, device, progress, task_id)
     remove_empty_directories(videos_dir)
+
+    if PROJECT_STATUS == "production" and video_count == total_video_files:
+        clear_remote_directory(device.serial, VIDEO_REMOTE_PATH)
+
     return video_count
 
 
@@ -534,8 +570,11 @@ def move_video_files(
 
             try:
                 original_mtime = os.path.getmtime(source_path)
-                shutil.move(source_path, destination_path)
-                os.utime(destination_path, (original_mtime, original_mtime))
+                transfer_file(source_path, destination_path)
+                if PROJECT_STATUS == "production":
+                    os.utime(destination_path, (original_mtime, original_mtime))
+                else:
+                    os.remove(source_path)
                 copied_count += 1
             except OSError as error:
                 print(f"[!] Failed to move a screen video: {error}")
@@ -553,7 +592,7 @@ def update_file_progress(progress: Progress, task_id: int, label: str) -> None:
     progress.update(
         task_id,
         advance=1,
-        description=f"{label}: Copied {completed} of {task.total} files",
+        description=f"{label}: {get_transfer_verb()} {completed} of {task.total} files",
     )
 
 
@@ -561,3 +600,44 @@ def count_files(directory: str) -> int:
     """Count files recursively in a directory."""
 
     return sum(len(filenames) for _, _, filenames in os.walk(directory))
+
+
+def transfer_file(source_path: str, destination_path: str) -> None:
+    """Copy files in development and move them in production."""
+
+    if PROJECT_STATUS == "development":
+        shutil.copy2(source_path, destination_path)
+    elif PROJECT_STATUS == "production":
+        shutil.move(source_path, destination_path)
+    else:
+        raise ValueError(f"Unsupported project status: {PROJECT_STATUS}")
+
+
+def get_transfer_verb() -> str:
+    """Return the output verb matching the configured transfer mode."""
+
+    return "Moved" if PROJECT_STATUS == "production" else "Copied"
+
+
+def clear_remote_directory(serial: str, remote_path: str) -> bool:
+    """Delete a remote directory's contents while preserving the directory."""
+
+    result = run_adb_command(
+        [
+            "adb",
+            "-s",
+            serial,
+            "shell",
+            "find",
+            remote_path,
+            "-mindepth",
+            "1",
+            "-delete",
+        ]
+    )
+
+    if result.returncode != 0:
+        print("[!] Failed to clear transferred files from the Android device.")
+        return False
+
+    return True
