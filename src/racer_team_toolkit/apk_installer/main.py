@@ -1,10 +1,10 @@
 from racer_team_toolkit.adb import get_connected_serials
 from racer_team_toolkit.apk_installer.functions import get_folders_in_downloads
+from racer_team_toolkit.config import APK_INSTALLER_HEADER
 from racer_team_toolkit.ui.functions import print_error, print_header, select_menu_tuple
 
 FOLDER_IN_DOWNLOADS_WITH_FULL_PATH = get_folders_in_downloads()
 MENU_CHOICES = [path.name for path in FOLDER_IN_DOWNLOADS_WITH_FULL_PATH]
-MAIN_HEADER = "Select a folder to install APKs from:"
 
 
 def main() -> None:
@@ -19,7 +19,7 @@ def main() -> None:
         # clear the console and return to main menu
 
     # Print Menu and get user choice
-    choice_index, user_choice = select_menu_tuple(MAIN_HEADER, MENU_CHOICES)
+    choice_index, user_choice = select_menu_tuple(APK_INSTALLER_HEADER, MENU_CHOICES)
 
     # Use the choice_index to get the corresponding folder path
 

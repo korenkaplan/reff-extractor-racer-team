@@ -1,4 +1,5 @@
 from racer_team_toolkit.apk_installer.functions import get_folders_in_downloads
+from racer_team_toolkit.config import JAR_MANAGEMENT_CHOICES, JAR_MANAGEMENT_HEADER
 from racer_team_toolkit.jar_management.functions import (
     check_if_jar_exists_in_folder,
     check_server_status,
@@ -7,13 +8,11 @@ from racer_team_toolkit.ui.functions import print_header, select_menu, select_me
 
 FOLDER_IN_DOWNLOADS_WITH_FULL_PATH = get_folders_in_downloads()
 FOLDERS_IN_DOWNLOADS = [path.name for path in FOLDER_IN_DOWNLOADS_WITH_FULL_PATH]
-MAIN_HEADER = "Select a JAR management option:"
-USER_CHOICES = ["Upload JAR", "Restart JAR", "Return to Main Menu"]
 
 
 def main() -> None:
-    print_header("AR Management!")
-    user_choice = select_menu(MAIN_HEADER, USER_CHOICES)
+    print_header("JAR Management!")
+    user_choice = select_menu(JAR_MANAGEMENT_HEADER, JAR_MANAGEMENT_CHOICES)
 
     if not check_server_status():
         print("[-] No connected server found. Please ensure the server is running and connected.")

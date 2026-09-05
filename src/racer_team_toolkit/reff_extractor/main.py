@@ -2,7 +2,8 @@
 
 import os
 
-from racer_team_toolkit.adb import DEVICES_REGISTRY, LOCAL_DUMP_DIR, get_connected_serials
+from racer_team_toolkit.adb import get_connected_serials
+from racer_team_toolkit.config import DEVICES_REGISTRY, LOCAL_DUMP_DIR
 
 from .collector import (
     group_files_into_flights,

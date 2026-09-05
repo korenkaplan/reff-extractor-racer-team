@@ -3,11 +3,15 @@ import shutil
 from datetime import datetime
 from typing import Optional
 
-from racer_team_toolkit.adb import LOCAL_DUMP_DIR, VIDEO_REMOTE_PATH, AndroidDevice, run_adb_command
-
-# Maximum allowed time difference between files in the same flight.
-MAX_FLIGHT_TIME_DIFF = 120
-MAX_VIDEO_TIME_DIFF = 240
+from racer_team_toolkit.adb import run_adb_command
+from racer_team_toolkit.config import (
+    LOCAL_DUMP_DIR,
+    MAX_FLIGHT_TIME_DIFF,
+    MAX_VIDEO_TIME_DIFF,
+    SUPPORTED_DEVICE_TYPES,
+    VIDEO_REMOTE_PATH,
+    AndroidDevice,
+)
 
 
 def get_file_type(filename: str) -> Optional[str]:
@@ -22,7 +26,7 @@ def get_file_type(filename: str) -> Optional[str]:
 
     upper_filename = filename.upper().replace(" ", "_")
 
-    for device_type in ("RACER", "TABLET", "ISR"):
+    for device_type in SUPPORTED_DEVICE_TYPES:
         if upper_filename.startswith(f"{device_type}_"):
             return device_type
 
